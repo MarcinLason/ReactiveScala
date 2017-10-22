@@ -1,4 +1,4 @@
-import actors.CartActor.{CheckoutCancelled, CheckoutStarted, ItemAdded, ItemRemoved}
+import actors.CartActor._
 import actors.CheckoutActor._
 import actors.{CartActor, CheckoutActor}
 import akka.actor.{ActorSystem, Props}
@@ -15,11 +15,17 @@ object Main extends App {
     val checkoutActor = actorSystem.actorOf(Props[CheckoutActor], "checkoutActor")
 
     cartActor ! ItemAdded
-//    cartActor ! ItemRemoved
-//    cartActor ! ItemAdded
-//    cartActor ! ItemAdded
-//    cartActor ! CheckoutStarted
-//    cartActor ! CheckoutCancelled
+    cartActor ! ItemRemoved
+    cartActor ! ItemAdded
+    cartActor ! ItemAdded
+    cartActor ! ItemAdded
+    cartActor ! ItemRemoved
+    cartActor ! ItemAdded
+    cartActor ! CheckoutStarted
+    cartActor ! CheckoutCancelled
+    cartActor ! CheckoutStarted
+    cartActor ! CheckoutClosed
+    cartActor ! ItemAdded
 
 //    checkoutActor ! Start
 //    checkoutActor ! DeliveryMethodSelected
