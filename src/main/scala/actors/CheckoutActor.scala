@@ -117,12 +117,14 @@ class CheckoutActor extends Actor with Timers {
   def cancelled: Receive = {
     case _ => {
       println("Transaction cancelled.")
+      context.stop(self)
     }
   }
 
   def closed: Receive = {
     case _ => {
       println("Transaction closed.")
+      context.stop(self)
     }
   }
 }
