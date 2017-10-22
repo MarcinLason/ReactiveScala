@@ -3,128 +3,103 @@ package actors
 import java.util.concurrent.TimeUnit
 
 import actors.CheckoutActor._
-import akka.actor.{Actor, Timers}
+import akka.actor.FSM
 
 import scala.concurrent.duration.FiniteDuration
 
-
 object CheckoutActor {
 
+  sealed trait State
+  case object SelectingDelivery extends State
+  case object SelectingPaymentMethod extends State
+  case object ProcessingPayment extends State
+  case object Closed extends State
+  case object Cancelled extends State
+
   case class CheckoutTimerExpired()
-
-  case class PaymentTimerExpired()
-
   case class DeliveryMethodSelected()
-
   case class PaymentSelected()
-
   case class PaymentReceived()
-
   case class Start()
+  case class Cancel()
 
-  case class Cancelled()
-
+  val checkoutTimerKey = "checkoutTimerKey"
+  val timeToDumpTheCheckout = new FiniteDuration(2, TimeUnit.SECONDS)
+  val timeToDumpThePayment = new FiniteDuration(30, TimeUnit.SECONDS)
+  val timeToTerminate = new FiniteDuration(2, TimeUnit.SECONDS)
+  val nonEmptyCart = 10
 }
 
+class CheckoutActor extends FSM[State, Any] {
 
-class CheckoutActor extends Actor with Timers {
+  startWith(SelectingDelivery, nonEmptyCart)
 
-  val timeToDumpTheCheckout = new FiniteDuration(30, TimeUnit.SECONDS)
-  val timeToDumpThePayment = new FiniteDuration(30, TimeUnit.SECONDS)
-  val checkoutTimerKey = "checkoutTimerKey"
-  val paymentTimerKey = "paymentTimerKey"
-  var itemCounter = 3
-
-  override def receive = selectingDelivery
-
-  def selectingDelivery: Receive = {
-
-    case Start => {
-      timers.startSingleTimer(checkoutTimerKey, CheckoutTimerExpired, timeToDumpTheCheckout)
-      println("Checkout process started.")
+  when(SelectingDelivery) {
+    case Event(Start, cart) => {
+      setTimer(checkoutTimerKey, CheckoutTimerExpired, timeToDumpTheCheckout)
+      println("Start selecting delivery. " + cart + " items in the cart.")
+      stay() using cart
     }
-
-    case Cancelled => {
-      println("Checkout cancelled while selecting delivery.")
-      timers.cancel(checkoutTimerKey)
-      context.become(cancelled)
-    }
-
-    case CheckoutTimerExpired => {
-      println("Checkout time expired, it will be cancelled.")
-      context.become(cancelled)
-    }
-
-    case DeliveryMethodSelected => {
+    case Event(DeliveryMethodSelected, cart) => {
       println("Delivery method selected.")
-      context.become(selectingPaymentMethod)
+      goto(SelectingPaymentMethod) using cart
     }
-
-    case _ => {
-      println("Selecting delivery mode.")
+    case Event(Cancel, cart) => {
+      println("Checkout cancelled while selecting delivery.")
+      cancelTimer(checkoutTimerKey)
+      goto(Cancelled) using cart
     }
-  }
-
-  def selectingPaymentMethod: Receive = {
-
-    case Cancelled => {
-      println("Checkout cancelled while selecting payment method.")
-      timers.cancel(checkoutTimerKey)
-      context.become(cancelled)
-    }
-
-    case CheckoutTimerExpired => {
+    case Event(CheckoutTimerExpired, cart) => {
       println("Checkout time expired, it will be cancelled.")
-      context.become(cancelled)
-    }
-
-    case PaymentSelected => {
-      println("Payment method selected.")
-      timers.cancel(checkoutTimerKey)
-      timers.startSingleTimer(paymentTimerKey, PaymentTimerExpired, timeToDumpThePayment)
-      context.become(processingPayment)
-    }
-
-    case _ => {
-      println("Selecting payment method mode.")
+      goto(Cancelled) using cart
     }
   }
 
-  def processingPayment: Receive = {
-
-    case Cancelled => {
-      println("Payment cancelled while processing.")
-      timers.cancel(paymentTimerKey)
-      context.become(cancelled)
+  when(SelectingPaymentMethod) {
+    case Event(PaymentSelected, cart) => {
+      println("Peyment method selected.")
+      cancelTimer(checkoutTimerKey)
+      goto(ProcessingPayment) using cart
     }
-
-    case PaymentTimerExpired => {
-      println("Payment time expired, it will be cancelled.")
-      context.become(cancelled)
+    case Event(Cancel, cart) => {
+      println("Checkout cancelled while selecting payment method.")
+      cancelTimer(checkoutTimerKey)
+      goto(Cancelled) using cart
     }
+    case Event(CheckoutTimerExpired, cart) => {
+      println("Checkout time expired, it will be cancelled.")
+      goto(Cancelled) using cart
+    }
+  }
 
-    case PaymentReceived => {
-      timers.cancel(paymentTimerKey)
+  when(ProcessingPayment, stateTimeout = timeToDumpThePayment) {
+    case Event(PaymentReceived, cart) => {
       println("Payment received.")
-      context.become(closed)
+      goto(Closed) using cart
     }
-
-    case _ => {
-      println("Processing payment mode.")
+    case Event(Cancel, cert) => {
+      println("Payment cancelled while processing.")
+      goto(Cancelled) using cert
     }
-  }
-
-  def cancelled: Receive = {
-    case _ => {
-      println("Transaction cancelled.")
-      context.stop(self)
+    case Event(StateTimeout, cert) => {
+      println("Payment time expired, it will be cancelled.")
+      goto(Cancelled) using cert
     }
   }
 
-  def closed: Receive = {
-    case _ => {
+  when(Closed, stateTimeout = timeToTerminate) {
+    case Event(StateTimeout, _) => {
       println("Transaction closed.")
       context.stop(self)
+      stay()
+    }
+  }
+
+  when(Cancelled, stateTimeout = timeToTerminate) {
+    case Event(StateTimeout, _) => {
+      println("Transaction cancelled.")
+      context.stop(self)
+      stay()
     }
   }
 }
