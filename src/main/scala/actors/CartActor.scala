@@ -37,7 +37,7 @@ class CartActor extends Actor with Timers {
       itemCounter = itemCounter + 1
       println("Item added. " + itemCounter + " items in the Bucket.")
       timers.startSingleTimer(timerKey, CartTimerExpired, timeToDumpTheBucket)
-      context.become(nonempty)
+      context.become(nonEmpty)
     }
 
     case _ => {
@@ -45,7 +45,7 @@ class CartActor extends Actor with Timers {
     }
   }
 
-  def nonempty: Receive = {
+  def nonEmpty: Receive = {
 
     case ItemAdded => {
       itemCounter = itemCounter + 1
@@ -74,7 +74,7 @@ class CartActor extends Actor with Timers {
     case CheckoutStarted => {
       println("Checkout Started.")
       timers.cancel(timerKey)
-      context.become(incheckout)
+      context.become(inCheckout)
     }
 
     case _ => {
@@ -82,7 +82,7 @@ class CartActor extends Actor with Timers {
     }
   }
 
-  def incheckout: Receive = {
+  def inCheckout: Receive = {
 
     case CheckoutClosed => {
       println("Checkout closed. The bucket is empty.")
@@ -93,7 +93,7 @@ class CartActor extends Actor with Timers {
     case CheckoutCancelled => {
       println("Checkout cancelled. " + itemCounter + " items in the Bucket.")
       timers.startSingleTimer("timerKey", CartTimerExpired, timeToDumpTheBucket)
-      context.become(nonempty)
+      context.become(nonEmpty)
     }
 
     case _ => {
