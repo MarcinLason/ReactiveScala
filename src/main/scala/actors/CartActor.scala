@@ -1,13 +1,17 @@
 package actors
 
-import java.util.concurrent.TimeUnit
-
 import actors.CartActor._
-import akka.actor.{Actor, Timers}
-
-import scala.concurrent.duration.FiniteDuration
+import akka.actor.FSM
 
 object CartActor {
+
+  sealed trait State
+
+  case object Empty extends State
+
+  case object NonEmpty extends State
+
+  case object InCheckout extends State
 
   case class ItemAdded()
 
@@ -23,83 +27,39 @@ object CartActor {
 
 }
 
-class CartActor extends Actor with Timers {
+class CartActor extends FSM[State, Int] {
 
-  val timeToDumpTheBucket = new FiniteDuration(15, TimeUnit.SECONDS)
-  val timerKey = "timerKey"
-  var itemCounter = 0
+  startWith(Empty, 0)
 
-  override def receive = empty
-
-  def empty: Receive = {
-
-    case ItemAdded => {
-      itemCounter = itemCounter + 1
-      println("Item added. " + itemCounter + " items in the Bucket.")
-      timers.startSingleTimer(timerKey, CartTimerExpired, timeToDumpTheBucket)
-      context.become(nonEmpty)
+  onTransition {
+    case Empty -> NonEmpty => {
+      println("Zmieniam stan z Empty na NonEmpty")
     }
-
-    case _ => {
-      println("The bucket is empty.")
+    case NonEmpty -> Empty => {
+      println("Zmieniam stan z NonEmpty na Empty")
+    }
+    case NonEmpty -> InCheckout => {
+      println("Zmieniam stan z NonEmpty na InCheckout")
+    }
+    case InCheckout -> Empty => {
+      println("Zmieniam stan z InCheckout na Empty")
     }
   }
 
-  def nonEmpty: Receive = {
-
-    case ItemAdded => {
-      itemCounter = itemCounter + 1
-      timers.startSingleTimer(timerKey, CartTimerExpired, timeToDumpTheBucket)
-      println("Item added. " + itemCounter + " items in the Bucket.")
-    }
-
-    case ItemRemoved => {
-      itemCounter = itemCounter - 1
-      timers.startSingleTimer("timerKey", CartTimerExpired, timeToDumpTheBucket)
-      println("Item removed. " + itemCounter + " items in the Bucket.")
-
-      if (itemCounter <= 0) {
-        println("The bucket is empty.")
-        timers.cancel(timerKey)
-        context.become(empty)
-      }
-    }
-
-    case CartTimerExpired => {
-      println("CartTimerExpired: the bucket will be dumped.")
-      itemCounter = 0
-      context.become(empty)
-    }
-
-    case CheckoutStarted => {
-      println("Checkout Started.")
-      timers.cancel(timerKey)
-      context.become(inCheckout)
-    }
-
-    case _ => {
-      println("Bucket contains " + itemCounter + " items.")
+  when(Empty) {
+    case Event(ItemAdded, 0) => {
+      goto(NonEmpty) using (1)
     }
   }
 
-  def inCheckout: Receive = {
-
-    case CheckoutClosed => {
-      println("Checkout closed. The bucket is empty.")
-      itemCounter = 0;
-      context.become(empty)
-    }
-
-    case CheckoutCancelled => {
-      println("Checkout cancelled. " + itemCounter + " items in the Bucket.")
-      timers.startSingleTimer("timerKey", CartTimerExpired, timeToDumpTheBucket)
-      context.become(nonEmpty)
-    }
-
-    case _ => {
-      println("Bucket in checkout mode.")
+  when(NonEmpty) {
+    case Event(_,_) => {
+      println("Non empty")
+      stay() using (2)
     }
   }
+
+  initialize()
 }
 
 
