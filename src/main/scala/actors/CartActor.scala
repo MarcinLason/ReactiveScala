@@ -2,6 +2,7 @@ package actors
 
 import java.util.concurrent.TimeUnit
 
+import actors.CartActor._
 import akka.actor.{Actor, Timers}
 
 import scala.concurrent.duration.FiniteDuration
@@ -25,38 +26,73 @@ object CartActor {
 class CartActor extends Actor with Timers {
 
   val timeToDumpTheBucket = new FiniteDuration(15, TimeUnit.SECONDS)
+  var itemCounter = 0
 
   override def receive = empty
 
   def empty: Receive = {
+
+    case ItemAdded => {
+      println("Item added to the bucket")
+      itemCounter = itemCounter + 1
+      timers.startSingleTimer("timerKey", CartTimerExpired, timeToDumpTheBucket)
+      context.become(nonempty)
+    }
+
     case _ => {
-      println("Jestem empty")
-      timers.startSingleTimer(timerAction(), "15 seconds later...", timeToDumpTheBucket)
-      context.become(full)
+      println("The bucket is empty")
     }
   }
 
   def nonempty: Receive = {
+
+    case ItemAdded => {
+      itemCounter = itemCounter + 1
+      println("Item added. " + itemCounter + " items in the Bucket.")
+    }
+
+    case ItemRemoved => {
+      itemCounter = itemCounter - 1
+      println("Item removed. " + itemCounter + " items in the Bucket.")
+
+      if (itemCounter <= 0) {
+        println("The bucket is empty.")
+        context.become(empty)
+      }
+    }
+
+    case CartTimerExpired => {
+      println("CartTimerExpired: the bucket is empty.")
+      itemCounter = 0
+      context.become(empty)
+    }
+
+    case CheckoutStarted => {
+      println("Checkout Started.")
+      context.become(incheckout)
+    }
+
     case _ => {
-      println("Jestem nonempty")
+      println("I'm nonempty")
     }
   }
 
   def incheckout: Receive = {
-    case _ => {
-      print("Jestem inCheckout")
-    }
-  }
 
-  def full: Receive = {
-    case _ => {
-      println("Jestem full")
+    case CheckoutClosed => {
+      println("Checkout closed. The bucket is empty.")
+      itemCounter = 0;
       context.become(empty)
     }
-  }
 
-  def timerAction(): Unit = {
-    println("Timer zakonczony")
+    case CheckoutCancelled => {
+      println("Checkout cancelled.")
+      context.become(nonempty)
+    }
+
+    case _ => {
+      print("I'm incheckout")
+    }
   }
 }
 
