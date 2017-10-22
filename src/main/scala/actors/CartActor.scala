@@ -26,6 +26,7 @@ object CartActor {
 class CartActor extends Actor with Timers {
 
   val timeToDumpTheBucket = new FiniteDuration(15, TimeUnit.SECONDS)
+  val timerKey = "timerKey"
   var itemCounter = 0
 
   override def receive = empty
@@ -33,14 +34,14 @@ class CartActor extends Actor with Timers {
   def empty: Receive = {
 
     case ItemAdded => {
-      println("Item added to the bucket")
       itemCounter = itemCounter + 1
-      timers.startSingleTimer("timerKey", CartTimerExpired, timeToDumpTheBucket)
+      println("Item added. " + itemCounter + " items in the Bucket.")
+      timers.startSingleTimer(timerKey, CartTimerExpired, timeToDumpTheBucket)
       context.become(nonempty)
     }
 
     case _ => {
-      println("The bucket is empty")
+      println("The bucket is empty.")
     }
   }
 
@@ -48,32 +49,36 @@ class CartActor extends Actor with Timers {
 
     case ItemAdded => {
       itemCounter = itemCounter + 1
+      timers.startSingleTimer(timerKey, CartTimerExpired, timeToDumpTheBucket)
       println("Item added. " + itemCounter + " items in the Bucket.")
     }
 
     case ItemRemoved => {
       itemCounter = itemCounter - 1
+      timers.startSingleTimer("timerKey", CartTimerExpired, timeToDumpTheBucket)
       println("Item removed. " + itemCounter + " items in the Bucket.")
 
       if (itemCounter <= 0) {
         println("The bucket is empty.")
+        timers.cancel(timerKey)
         context.become(empty)
       }
     }
 
     case CartTimerExpired => {
-      println("CartTimerExpired: the bucket is empty.")
+      println("CartTimerExpired: the bucket will be dumped.")
       itemCounter = 0
       context.become(empty)
     }
 
     case CheckoutStarted => {
       println("Checkout Started.")
+      timers.cancel(timerKey)
       context.become(incheckout)
     }
 
     case _ => {
-      println("I'm nonempty")
+      println("Bucket contains " + itemCounter + " items.")
     }
   }
 
@@ -86,12 +91,13 @@ class CartActor extends Actor with Timers {
     }
 
     case CheckoutCancelled => {
-      println("Checkout cancelled.")
+      println("Checkout cancelled. " + itemCounter + " items in the Bucket.")
+      timers.startSingleTimer("timerKey", CartTimerExpired, timeToDumpTheBucket)
       context.become(nonempty)
     }
 
     case _ => {
-      print("I'm incheckout")
+      println("Bucket in checkout mode.")
     }
   }
 }
