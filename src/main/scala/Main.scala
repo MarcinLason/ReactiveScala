@@ -14,23 +14,23 @@ object Main extends App {
     val cartActor = actorSystem.actorOf(Props[CartActor], "cartActor")
     val checkoutActor = actorSystem.actorOf(Props[CheckoutActor], "checkoutActor")
 
-//    cartActor ! ItemAdded
-//    cartActor ! ItemRemoved
-//    cartActor ! ItemAdded
-//    cartActor ! ItemAdded
-//    cartActor ! ItemAdded
-//    cartActor ! ItemRemoved
-//    cartActor ! ItemAdded
-//    cartActor ! CheckoutStarted
-//    cartActor ! CheckoutCancelled
-//    cartActor ! CheckoutStarted
-//    cartActor ! CheckoutClosed
-//    cartActor ! ItemAdded
+    cartActor ! ItemAdded
+    cartActor ! ItemRemoved
+    cartActor ! ItemAdded
+    cartActor ! ItemAdded
+    cartActor ! ItemAdded
+    cartActor ! ItemRemoved
+    cartActor ! ItemAdded
+    cartActor ! CheckoutStarted
+    cartActor ! CheckoutCancelled
+    cartActor ! CheckoutStarted
+    cartActor ! CheckoutClosed
+    cartActor ! ItemAdded
 
-    checkoutActor ! Start
-    checkoutActor ! DeliveryMethodSelected
-    checkoutActor ! PaymentSelected
-    checkoutActor ! PaymentReceived
+//    checkoutActor ! Start
+//    checkoutActor ! DeliveryMethodSelected
+//    checkoutActor ! PaymentSelected
+//    checkoutActor ! PaymentReceived
 
     StdIn.readLine()
   }

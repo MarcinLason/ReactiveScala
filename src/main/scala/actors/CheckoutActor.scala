@@ -24,7 +24,7 @@ object CheckoutActor {
   case class Cancel()
 
   val checkoutTimerKey = "checkoutTimerKey"
-  val timeToDumpTheCheckout = new FiniteDuration(2, TimeUnit.SECONDS)
+  val timeToDumpTheCheckout = new FiniteDuration(30, TimeUnit.SECONDS)
   val timeToDumpThePayment = new FiniteDuration(30, TimeUnit.SECONDS)
   val timeToTerminate = new FiniteDuration(2, TimeUnit.SECONDS)
   val nonEmptyCart = 10
@@ -57,7 +57,7 @@ class CheckoutActor extends FSM[State, Any] {
 
   when(SelectingPaymentMethod) {
     case Event(PaymentSelected, cart) => {
-      println("Peyment method selected.")
+      println("Payment method selected.")
       cancelTimer(checkoutTimerKey)
       goto(ProcessingPayment) using cart
     }
