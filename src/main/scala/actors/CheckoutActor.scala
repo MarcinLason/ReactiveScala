@@ -37,59 +37,59 @@ class CheckoutActor extends FSM[State, Any] {
   when(SelectingDelivery) {
     case Event(Start, cart) => {
       setTimer(checkoutTimerKey, CheckoutTimerExpired, timeToDumpTheCheckout)
-      println("Start selecting delivery. " + cart + " items in the cart.")
+      log.debug("Start selecting delivery. " + cart + " items in the cart.")
       stay() using cart
     }
     case Event(DeliveryMethodSelected, cart) => {
-      println("Delivery method selected.")
+      log.debug("Delivery method selected.")
       goto(SelectingPaymentMethod) using cart
     }
     case Event(Cancel, cart) => {
-      println("Checkout cancelled while selecting delivery.")
+      log.debug("Checkout cancelled while selecting delivery.")
       cancelTimer(checkoutTimerKey)
       goto(Cancelled) using cart
     }
     case Event(CheckoutTimerExpired, cart) => {
-      println("Checkout time expired, it will be cancelled.")
+      log.debug("Checkout time expired, it will be cancelled.")
       goto(Cancelled) using cart
     }
   }
 
   when(SelectingPaymentMethod) {
     case Event(PaymentSelected, cart) => {
-      println("Payment method selected.")
+      log.debug("Payment method selected.")
       cancelTimer(checkoutTimerKey)
       goto(ProcessingPayment) using cart
     }
     case Event(Cancel, cart) => {
-      println("Checkout cancelled while selecting payment method.")
+      log.debug("Checkout cancelled while selecting payment method.")
       cancelTimer(checkoutTimerKey)
       goto(Cancelled) using cart
     }
     case Event(CheckoutTimerExpired, cart) => {
-      println("Checkout time expired, it will be cancelled.")
+      log.debug("Checkout time expired, it will be cancelled.")
       goto(Cancelled) using cart
     }
   }
 
   when(ProcessingPayment, stateTimeout = timeToDumpThePayment) {
     case Event(PaymentReceived, cart) => {
-      println("Payment received.")
+      log.debug("Payment received.")
       goto(Closed) using cart
     }
     case Event(Cancel, cert) => {
-      println("Payment cancelled while processing.")
+      log.debug("Payment cancelled while processing.")
       goto(Cancelled) using cert
     }
     case Event(StateTimeout, cert) => {
-      println("Payment time expired, it will be cancelled.")
+      log.debug("Payment time expired, it will be cancelled.")
       goto(Cancelled) using cert
     }
   }
 
   when(Closed, stateTimeout = timeToTerminate) {
     case Event(StateTimeout, _) => {
-      println("Transaction closed.")
+      log.debug("Transaction closed.")
       context.stop(self)
       stay()
     }
@@ -97,7 +97,7 @@ class CheckoutActor extends FSM[State, Any] {
 
   when(Cancelled, stateTimeout = timeToTerminate) {
     case Event(StateTimeout, _) => {
-      println("Transaction cancelled.")
+      log.debug("Transaction cancelled.")
       context.stop(self)
       stay()
     }
