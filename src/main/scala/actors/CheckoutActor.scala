@@ -3,6 +3,7 @@ package actors
 import java.util.concurrent.TimeUnit
 
 import actors.CheckoutActor._
+import actors.Message._
 import akka.actor.FSM
 
 import scala.concurrent.duration.FiniteDuration
@@ -15,13 +16,6 @@ object CheckoutActor {
   case object ProcessingPayment extends State
   case object Closed extends State
   case object Cancelled extends State
-
-  case class CheckoutTimerExpired()
-  case class DeliveryMethodSelected()
-  case class PaymentSelected()
-  case class PaymentReceived()
-  case class Start()
-  case class Cancel()
 
   val checkoutTimerKey = "checkoutTimerKey"
   val timeToDumpTheCheckout = new FiniteDuration(30, TimeUnit.SECONDS)

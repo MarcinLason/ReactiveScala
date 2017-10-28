@@ -3,6 +3,7 @@ package actors
 import java.util.concurrent.TimeUnit
 
 import actors.CartActor._
+import actors.Message._
 import akka.actor.FSM
 
 import scala.concurrent.duration.FiniteDuration
@@ -13,13 +14,6 @@ object CartActor {
   case object Empty extends State
   case object NonEmpty extends State
   case object InCheckout extends State
-
-  case class ItemAdded()
-  case class ItemRemoved()
-  case class CartTimerExpired()
-  case class CheckoutStarted()
-  case class CheckoutCancelled()
-  case class CheckoutClosed()
 
   val timeToDumpTheBucket = new FiniteDuration(15, TimeUnit.SECONDS)
 }

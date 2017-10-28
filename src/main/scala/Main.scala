@@ -1,6 +1,5 @@
-import actors.CartActor._
-import actors.CheckoutActor._
-import actors.{CartActor, CheckoutActor}
+import actors.Message._
+import actors.{CartActor, CheckoutActor, CustomerActor}
 import akka.actor.{ActorSystem, Props}
 
 import scala.io.StdIn
