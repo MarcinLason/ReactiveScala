@@ -1,4 +1,4 @@
-import actors.Message._
+import utils.Message._
 import actors.{CartActor, CheckoutActor, CustomerActor}
 import akka.actor.{ActorSystem, Props}
 

@@ -3,7 +3,7 @@ package actors
 import java.util.concurrent.TimeUnit
 
 import actors.CartActor._
-import actors.Message._
+import utils.Message._
 import akka.actor.FSM
 
 import scala.concurrent.duration.FiniteDuration

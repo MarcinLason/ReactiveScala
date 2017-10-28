@@ -1,4 +1,4 @@
-package actors
+package utils
 
 object Message {
   case object ItemAdded
