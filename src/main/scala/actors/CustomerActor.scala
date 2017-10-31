@@ -9,15 +9,11 @@ object CustomerActor {
   sealed trait State
 
   case object Uninitialized extends State
-
   case object DuringShopping extends State
-
   case object DuringCheckout extends State
-
   case object DuringPayment extends State
-
+  case object WaitingForFinalize extends State
 }
-
 
 class CustomerActor extends FSM[State, ActorRef] {
 
@@ -35,31 +31,66 @@ class CustomerActor extends FSM[State, ActorRef] {
   }
 
   when(DuringShopping) {
-    case Event(ItemAdded, actorRef) => {
+    case Event(AddItem, cartActor) => {
       log.debug("Customer Actor: User requested to add item.")
-      actorRef ! ItemAdded
-      stay() using actorRef
+      cartActor ! AddItem
+      stay() using cartActor
     }
 
-    case Event(ItemRemoved, actorRef) => {
+    case Event(RemoveItem, cartActor) => {
       log.debug("CustomerActor: User requested to remove item.")
-      actorRef ! ItemRemoved
-      stay() using actorRef
+      cartActor ! RemoveItem
+      stay() using cartActor
     }
 
-    case Event(CheckoutStarted, actorRef) => {
+    case Event(StartCheckOut, cartActor) => {
       log.debug("CustomerActor: User requested to start checkout.")
-      actorRef ! CheckoutStarted
-      goto(DuringCheckout) using null
+      cartActor ! StartCheckOut
+      goto (DuringCheckout)
     }
   }
 
   when(DuringCheckout) {
-    case Event(CheckoutActorCreated, actorRef) => {
+    case Event(CheckOutStarted(checkoutActor), _) => {
       log.debug("CustomerActor: Checkout actor initialized.")
-      stay() using actorRef
+      stay() using checkoutActor
+    }
+
+    case Event(DeliveryMethodSelected, checkoutActor) => {
+      log.debug("CustomerActor: Delivery method selected.")
+      checkoutActor ! DeliveryMethodSelected
+      stay() using checkoutActor
+    }
+
+    case Event(PaymentSelected, checkoutActor) => {
+      log.debug("CustomerActor: User requested to start payment.")
+      checkoutActor ! PaymentSelected
+      goto(DuringPayment)
     }
   }
 
+  when (DuringPayment) {
+    case Event(PaymentServiceStarted(paymentServiceActor), _ ) => {
+      log.debug("CustomerActor: Payment Service actor initialized.")
+      stay() using paymentServiceActor
+    }
 
+    case Event(DoPayment, paymentServiceActor) => {
+      log.debug("CustomerActor: Sending payment to PaymentService.")
+      paymentServiceActor ! DoPayment
+      stay() using paymentServiceActor
+    }
+
+    case Event(PaymentConfirmed, paymentServiceActor) => {
+      log.debug("CustomerActor: Got payment confirmation.")
+      goto (WaitingForFinalize)
+    }
+  }
+
+  when (WaitingForFinalize) {
+    case Event(CartEmpty, _) => {
+      log.debug("CustomerActor: Transaction finalized. Opening new Cart.")
+      goto(DuringShopping) using context.system.actorOf(Props[CartActor], "cartActor")
+    }
+  }
 }
