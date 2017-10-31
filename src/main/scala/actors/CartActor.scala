@@ -4,7 +4,7 @@ import java.util.concurrent.TimeUnit
 
 import actors.CartActor._
 import utils.Message._
-import akka.actor.FSM
+import akka.actor.{FSM, Props}
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -52,6 +52,9 @@ class CartActor extends FSM[State, Int] {
 
     case Event(CheckoutStarted, itemCounter:Int) => {
       log.debug("Checkout started.")
+      val checkout = context.system.actorOf(Props[CheckoutActor], "checkoutActor")
+      checkout ! Event(Start, itemCounter)
+      context.sender() ! (CheckoutActorCreated, checkout)
       goto (InCheckout) using itemCounter
     }
   }
@@ -67,8 +70,6 @@ class CartActor extends FSM[State, Int] {
       goto (Empty) using 0
     }
   }
-
-  initialize()
 }
 
 

@@ -1,6 +1,6 @@
-import utils.Message._
-import actors.{CartActor, CheckoutActor, CustomerActor}
+import actors.CustomerActor
 import akka.actor.{ActorSystem, Props}
+import utils.Message._
 
 import scala.io.StdIn
 
@@ -10,28 +10,15 @@ object Main extends App {
   val actorSystem = ActorSystem("e-Sklep")
 
   try {
-    val cartActor = actorSystem.actorOf(Props[CartActor], "cartActor")
-    val checkoutActor = actorSystem.actorOf(Props[CheckoutActor], "checkoutActor")
+    val customerActor = actorSystem.actorOf(Props[CustomerActor], "customerActor")
 
-    cartActor ! ItemAdded
-    cartActor ! ItemRemoved
-    cartActor ! ItemAdded
-    cartActor ! ItemAdded
-    cartActor ! ItemAdded
-    cartActor ! ItemRemoved
-    cartActor ! ItemAdded
-    cartActor ! CheckoutStarted
-    cartActor ! CheckoutCancelled
-    cartActor ! CheckoutStarted
-    cartActor ! CheckoutClosed
-    cartActor ! ItemAdded
-
-//    checkoutActor ! Start
-//    checkoutActor ! DeliveryMethodSelected
-//    checkoutActor ! PaymentSelected
-//    checkoutActor ! PaymentReceived
-
-    StdIn.readLine()
+    var line = StdIn.readLine()
+    while (line != "exit") {
+      if (line != "") {
+        customerActor ! getObjectMessage(line)
+      }
+      line = StdIn.readLine()
+    }
   }
   finally {
     actorSystem.terminate()
