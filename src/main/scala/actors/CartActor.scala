@@ -3,7 +3,7 @@ package actors
 import java.util.concurrent.TimeUnit
 
 import actors.CartActor._
-import akka.actor.{FSM, Props}
+import akka.actor.{ActorRef, FSM, Props}
 import utils.Message._
 
 import scala.concurrent.duration.FiniteDuration
@@ -18,7 +18,8 @@ object CartActor {
 
   case object InCheckout extends State
 
-  val timeToDumpTheBucket = new FiniteDuration(15, TimeUnit.SECONDS)
+  val timeToDumpTheBucket = new FiniteDuration(60, TimeUnit.SECONDS);
+  var customer:ActorRef = null
 }
 
 class CartActor extends FSM[State, Int] {
@@ -51,8 +52,9 @@ class CartActor extends FSM[State, Int] {
     case Event(StartCheckOut, itemCounter: Int) => {
       log.debug("CartActor: Checkout started.")
       val checkout = context.system.actorOf(Props[CheckoutActor], "checkoutActor")
+      customer = context.sender()
       checkout ! Start
-      context.sender() ! CheckOutStarted(checkout)
+      customer ! CheckOutStarted(checkout)
       goto(InCheckout) using itemCounter
     }
 
@@ -70,6 +72,7 @@ class CartActor extends FSM[State, Int] {
 
     case Event(CheckOutClosed, _) => {
       log.debug("CartActor: Checkout closed. The bucket is empty.")
+      customer ! CartEmpty
       goto(Empty) using 0
     }
   }

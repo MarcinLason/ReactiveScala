@@ -1,8 +1,12 @@
 package actors
 
-import actors.PaymentServiceActor.{State, Uninitialized, WaitingForPayment}
+import java.util.concurrent.TimeUnit
+
+import actors.PaymentServiceActor._
 import akka.actor.{ActorRef, FSM}
 import utils.Message.{DoPayment, PaymentConfirmed, PaymentReceived, Start}
+
+import scala.concurrent.duration.FiniteDuration
 
 object PaymentServiceActor {
 
@@ -12,6 +16,9 @@ object PaymentServiceActor {
 
   case object WaitingForPayment extends State
 
+  case object Closed extends State
+
+  val timeToTerminate = new FiniteDuration(2, TimeUnit.SECONDS)
 }
 
 class PaymentServiceActor extends FSM[State, Any] {
@@ -31,8 +38,15 @@ class PaymentServiceActor extends FSM[State, Any] {
       log.debug("PaymentServiceActor: Got payment to handle.")
       context.sender() ! PaymentConfirmed
       checkoutActor.asInstanceOf[ActorRef] ! PaymentReceived
-      stay()
+      goto(Closed)
     }
   }
 
+  when(Closed, stateTimeout = timeToTerminate) {
+    case Event(StateTimeout, _) => {
+      log.debug("PaymentServiceActor: Transaction closed.")
+      context.stop(self)
+      stay()
+    }
+  }
 }

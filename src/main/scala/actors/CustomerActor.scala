@@ -71,7 +71,7 @@ class CustomerActor extends FSM[State, ActorRef] {
 
   when (DuringPayment) {
     case Event(PaymentServiceStarted(paymentServiceActor), _ ) => {
-      log.debug("CustomerActor: Payment Service actor initialized.")
+      log.debug("CustomerActor: Payment Service actor initialized." + paymentServiceActor)
       stay() using paymentServiceActor
     }
 
@@ -90,7 +90,7 @@ class CustomerActor extends FSM[State, ActorRef] {
   when (WaitingForFinalize) {
     case Event(CartEmpty, _) => {
       log.debug("CustomerActor: Transaction finalized. Opening new Cart.")
-      goto(DuringShopping) using context.system.actorOf(Props[CartActor], "cartActor")
+      goto(DuringShopping) using context.sender()
     }
   }
 }
