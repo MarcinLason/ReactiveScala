@@ -3,9 +3,10 @@ import actors.CartActor.{Empty, InCheckout, NonEmpty}
 import akka.actor.{ActorRef, ActorSystem}
 import akka.actor.FSM.StateTimeout
 import akka.testkit.{ImplicitSender, TestFSMRef, TestKitBase}
-import org.scalatest.{BeforeAndAfterAll, WordSpecLike}
+import org.scalatest.{BeforeAndAfterAll, Ignore, WordSpecLike}
 import utils.Message._
 
+@Ignore
 class CartActorTest extends TestKitBase with WordSpecLike with BeforeAndAfterAll with ImplicitSender {
 
   implicit lazy val system = ActorSystem()
