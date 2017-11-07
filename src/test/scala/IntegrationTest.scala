@@ -1,5 +1,5 @@
 import actors.CheckoutActor
-import akka.actor.{ActorSystem, Props}
+import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 import utils.Message._
@@ -21,7 +21,7 @@ class IntegrationTest extends TestKit(ActorSystem("TestSystem")) with WordSpecLi
       cartActor.send(checkoutActor, Start)
       customerActor.send(checkoutActor, DeliveryMethodSelected)
       customerActor.send(checkoutActor, PaymentSelected)
-      customerActor.expectMsg(PaymentServiceStarted(paymentServiceActor.testActor))
+      customerActor.expectMsg(PaymentServiceStarted(paymentServiceActor.asInstanceOf[ActorRef]))
       paymentServiceActor.send(checkoutActor, PaymentReceived)
 
       cartActor.expectMsg(CheckOutClosed)

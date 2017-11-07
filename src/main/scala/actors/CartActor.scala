@@ -53,7 +53,7 @@ class CartActor extends FSM[State, Int] {
       log.debug("CartActor: Checkout started.")
       val checkout = context.system.actorOf(Props[CheckoutActor], "checkoutActor")
       customer = context.sender()
-      checkout ! Start
+      checkout ! StartCheckoutActor(customer)
       customer ! CheckOutStarted(checkout)
       goto(InCheckout) using itemCounter
     }
@@ -72,7 +72,7 @@ class CartActor extends FSM[State, Int] {
 
     case Event(CheckOutClosed, _) => {
       log.debug("CartActor: Checkout closed. The bucket is empty.")
-      customer ! CartEmpty
+      customer ! CartEmpty(self)
       goto(Empty) using 0
     }
   }

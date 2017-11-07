@@ -9,7 +9,9 @@ object Message {
   case object CheckoutTimerExpired extends Message
 
   case object Start extends Message
+  case class StartCheckoutActor(customerActor: ActorRef) extends Message
   case object Cancel extends Message
+  case object Cancelled extends Message
   case object AddItem extends Message
   case object RemoveItem extends Message
   case object StartCheckOut extends Message
@@ -21,7 +23,8 @@ object Message {
   case object PaymentConfirmed extends Message
   case object PaymentReceived extends Message
   case object CheckOutClosed extends Message
-  case object CartEmpty extends Message
+  case class CartEmpty(cartActor: ActorRef) extends Message
+  case class CheckoutTerminated(cartActor: ActorRef) extends Message
 
   case object UnknownMessage extends Message
 

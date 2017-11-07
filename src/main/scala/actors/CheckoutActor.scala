@@ -16,7 +16,7 @@ object CheckoutActor {
   case object SelectingPaymentMethod extends State
   case object ProcessingPayment extends State
   case object Closed extends State
-  case object Cancelled extends State
+  case object CancelledCheckout extends State
 
   val checkoutTimerKey = "checkoutTimerKey"
   val timeToDumpTheCheckout = new FiniteDuration(60, TimeUnit.SECONDS)
@@ -31,9 +31,10 @@ class CheckoutActor extends FSM[State, Any] {
   startWith(Uninitialized, null)
 
   when (Uninitialized) {
-    case Event(Start, _) => {
+    case Event(StartCheckoutActor(customerActor), _) => {
       setTimer(checkoutTimerKey, CheckoutTimerExpired, timeToDumpTheCheckout)
       log.debug("CheckoutActor: Checkout created.")
+      customer = customerActor
       goto(SelectingDelivery) using context.sender()
     }
   }
@@ -43,14 +44,14 @@ class CheckoutActor extends FSM[State, Any] {
       log.debug("CheckoutActor: Delivery method selected.")
       goto(SelectingPaymentMethod) using cart
     }
-    case Event(Cancel, cart) => {
+    case Event(Cancelled, cart) => {
       log.debug("CheckoutActor: Checkout cancelled while selecting delivery.")
       cancelTimer(checkoutTimerKey)
-      goto(Cancelled) using cart
+      goto(CancelledCheckout) using cart
     }
     case Event(CheckoutTimerExpired, cart) => {
       log.debug("CheckoutActor: Checkout time expired, it will be cancelled.")
-      goto(Cancelled) using cart
+      goto(CancelledCheckout) using cart
     }
   }
 
@@ -60,18 +61,17 @@ class CheckoutActor extends FSM[State, Any] {
       cancelTimer(checkoutTimerKey)
       val paymentService = context.system.actorOf(Props[PaymentServiceActor], "paymentServiceActor")
       paymentService ! Start
-      customer = context.sender()
       context.sender() ! PaymentServiceStarted(paymentService)
       goto(ProcessingPayment) using cart
     }
-    case Event(Cancel, cart) => {
+    case Event(Cancelled, cart) => {
       log.debug("CheckoutActor: Checkout cancelled while selecting payment method.")
       cancelTimer(checkoutTimerKey)
-      goto(Cancelled) using cart
+      goto(CancelledCheckout) using cart
     }
     case Event(CheckoutTimerExpired, cart) => {
       log.debug("CheckoutActor: Checkout time expired, it will be cancelled.")
-      goto(Cancelled) using cart
+      goto(CancelledCheckout) using cart
     }
   }
 
@@ -82,13 +82,13 @@ class CheckoutActor extends FSM[State, Any] {
       cart.asInstanceOf[ActorRef] ! CheckOutClosed
       goto(Closed) using cart
     }
-    case Event(Cancel, cert) => {
+    case Event(Cancelled, cert) => {
       log.debug("CheckoutActor: Payment cancelled while processing.")
-      goto(Cancelled) using cert
+      goto(CancelledCheckout) using cert
     }
     case Event(StateTimeout, cert) => {
       log.debug("CheckoutActor: Payment time expired, it will be cancelled.")
-      goto(Cancelled) using cert
+      goto(CancelledCheckout) using cert
     }
   }
 
@@ -100,9 +100,11 @@ class CheckoutActor extends FSM[State, Any] {
     }
   }
 
-  when(Cancelled, stateTimeout = timeToTerminate) {
-    case Event(StateTimeout, _) => {
+  when(CancelledCheckout, stateTimeout = timeToTerminate) {
+    case Event(StateTimeout, cart) => {
       log.debug("CheckoutActor: Transaction cancelled.")
+      cart.asInstanceOf[ActorRef] ! CheckoutCancelled
+      customer ! CheckoutTerminated(cart.asInstanceOf[ActorRef])
       context.stop(self)
       stay()
     }

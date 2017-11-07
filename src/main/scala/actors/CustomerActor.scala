@@ -2,7 +2,7 @@ package actors
 
 import actors.CustomerActor._
 import akka.actor.{ActorRef, FSM, Props}
-import utils.Message._
+import utils.Message.{CartEmpty, _}
 
 object CustomerActor {
 
@@ -23,6 +23,10 @@ class CustomerActor extends FSM[State, ActorRef] {
     case Event(Start, _) => {
       log.debug("CustomerActor: actor started.")
       goto(DuringShopping) using context.system.actorOf(Props[CartActor], "cartActor")
+    }
+    case Event(CartEmpty(cartActor:ActorRef), _) => {
+      log.debug("Customer:Actor: actor restarted with empty cart.")
+      goto(DuringShopping) using cartActor
     }
     case Event(_, _) => {
       log.debug("CustomerActor: Can not perform action before initialization.")
@@ -67,11 +71,22 @@ class CustomerActor extends FSM[State, ActorRef] {
       checkoutActor ! PaymentSelected
       goto(DuringPayment)
     }
+
+    case Event(Cancel, checkoutActor) => {
+      log.debug("CustomerActor: User requested to cancel checkout.")
+      checkoutActor ! Cancelled
+      stay()
+    }
+
+    case Event(CheckoutTerminated(cartActor), _) => {
+      log.debug("CustomerActor: Checkout terminated. Please continue your shopping.")
+      goto(DuringShopping) using cartActor
+    }
   }
 
   when (DuringPayment) {
     case Event(PaymentServiceStarted(paymentServiceActor), _ ) => {
-      log.debug("CustomerActor: Payment Service actor initialized." + paymentServiceActor)
+      log.debug("CustomerActor: Payment Service actor initialized.")
       stay() using paymentServiceActor
     }
 
@@ -88,9 +103,9 @@ class CustomerActor extends FSM[State, ActorRef] {
   }
 
   when (WaitingForFinalize) {
-    case Event(CartEmpty, _) => {
-      log.debug("CustomerActor: Transaction finalized. Opening new Cart.")
-      goto(DuringShopping) using context.sender()
+    case Event(CheckOutClosed, _) => {
+      log.debug("CustomerActor: Transaction finalized.")
+      goto(Uninitialized)
     }
   }
 }
