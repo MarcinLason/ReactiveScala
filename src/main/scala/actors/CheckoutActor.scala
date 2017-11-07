@@ -21,7 +21,7 @@ object CheckoutActor {
   val checkoutTimerKey = "checkoutTimerKey"
   val timeToDumpTheCheckout = new FiniteDuration(60, TimeUnit.SECONDS)
   val timeToDumpThePayment = new FiniteDuration(60, TimeUnit.SECONDS)
-  val timeToTerminate = new FiniteDuration(2, TimeUnit.SECONDS)
+  val timeToTerminate = new FiniteDuration(1, TimeUnit.SECONDS)
 
   var customer:ActorRef = null
 }

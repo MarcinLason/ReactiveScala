@@ -1,12 +1,11 @@
 import actors.CartActor
 import actors.CartActor.{Empty, InCheckout, NonEmpty}
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.ActorSystem
 import akka.actor.FSM.StateTimeout
 import akka.testkit.{ImplicitSender, TestFSMRef, TestKitBase}
-import org.scalatest.{BeforeAndAfterAll, Ignore, WordSpecLike}
+import org.scalatest.{BeforeAndAfterAll, WordSpecLike}
 import utils.Message._
 
-@Ignore
 class CartActorTest extends TestKitBase with WordSpecLike with BeforeAndAfterAll with ImplicitSender {
 
   implicit lazy val system = ActorSystem()
@@ -79,18 +78,4 @@ class CartActorTest extends TestKitBase with WordSpecLike with BeforeAndAfterAll
       assert(fsm.stateData == 2)
     }
   }
-
-//  "Cart actor" should {
-//    "become empty after closing checkout." in {
-//      fsm.setState(Empty, 0)
-//      assert(fsm.stateName == Empty)
-//      fsm ! AddItem
-//      fsm ! AddItem
-//      fsm ! StartCheckOut
-//      assert(fsm.stateName == NonEmpty)
-//      fsm ! CheckOutClosed
-//      assert(fsm.stateName == Empty)
-//      assert(fsm.stateData == 0)
-//    }
-//  }
 }
