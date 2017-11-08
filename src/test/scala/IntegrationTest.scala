@@ -18,6 +18,7 @@ class IntegrationTest extends TestKit(ActorSystem("TestSystem")) with WordSpecLi
       val customerActor = TestProbe()
       val paymentServiceActor = TestProbe()
       val checkoutActor = cartActor.childActorOf(Props[CheckoutActor])
+
       cartActor.send(checkoutActor, StartCheckoutActor(customerActor.testActor))
       customerActor.send(checkoutActor, DeliveryMethodSelected)
       customerActor.send(checkoutActor, PaymentSelected)

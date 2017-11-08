@@ -10,7 +10,7 @@ class CartActorTest extends TestKitBase with WordSpecLike with BeforeAndAfterAll
 
   implicit lazy val system = ActorSystem()
   var fsm = TestFSMRef(new CartActor)
-  val mustBeTypedProperly: TestFSMRef[CartActor.State, Int, CartActor] = fsm
+  val typedProperly: TestFSMRef[CartActor.State, Int, CartActor] = fsm
 
   override def afterAll(): Unit = {
     system.terminate
