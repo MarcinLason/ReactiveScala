@@ -83,15 +83,9 @@ object Checkout {
   def apply: Checkout = new Checkout()
 
   sealed trait State
-
   case class SelectingDelivery() extends State
-
   case class SelectingPaymentMethod() extends State
-
   case class ProcessingPayment() extends State
-
   case class CheckoutChangeEvent(newState: State)
-
   case class SetTimerEvent(time: Long, key: Key, message: Message)
-
 }

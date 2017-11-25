@@ -4,6 +4,7 @@ import actors.remote.ProductCatalog
 import akka.actor.{ActorSystem, Props}
 import com.typesafe.config.ConfigFactory
 import database.ProductDatabase
+import messages.CustomerMessages.{Continue, Start}
 import messages.PaymentServiceMessages.DoPayment
 import messages.ProductCatalogMessages.SearchQuery
 
@@ -19,15 +20,14 @@ object Main {
     val remoteSystem = ActorSystem("SSystem", config.getConfig("serverapp").withFallback(config))
 
     val catalog = remoteSystem.actorOf(Props(new ProductCatalog(new ProductDatabase)), "catalog")
-
     val customer = clientSystem.actorOf(Props[Customer])
 
     val paymentService = clientSystem.actorOf(Props[PaymentService])
     paymentService ! DoPayment(PayPal)
 
-//    customer ! SearchQuery(List("Bigfoot", "Ale"))
-    //    customer ! Start
-    //    customer ! Continue
+    customer ! SearchQuery(List("Bigfoot", "Ale"))
+        customer ! Start
+        customer ! Continue
     Await.result(clientSystem.whenTerminated, Duration.Inf)
   }
 }

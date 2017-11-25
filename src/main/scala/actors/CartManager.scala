@@ -18,9 +18,7 @@ class CartManager(var shoppingCart: Cart, id: String = "007") extends Persistent
   def this(id: String) = this(Cart.empty, id)
 
   override def persistenceId: String = "cart-manager-" + id
-
   override def receive: Receive = receiveCommand
-
   override def receiveCommand: Receive = empty()
 
   def empty(): Receive = LoggingReceive {
@@ -113,25 +111,15 @@ object CartManager {
   def apply: CartManager = new CartManager()
 
   sealed trait State
-
   case object Empty extends State
-
   case object NonEmpty extends State
-
   case object InCheckout extends State
-
   sealed trait Action
-
   case class AddItemAction(item: Item) extends Action
-
   case class RemoveSingleItemAction(item: Item) extends Action
-
   case class NewState() extends Action
-
   case class CartChangeEvent(action: Action, newState: State)
-
   case class SetTimerEvent(time: Long, message: Message)
-
   case class Item(id: URI, name: String, brand: String, count: Int, price: BigDecimal)
 
   case class Cart(items: Map[URI, Item]) {

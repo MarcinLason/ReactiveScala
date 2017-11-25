@@ -48,7 +48,7 @@ class PaymentServer extends Actor {
     case HttpResponse(StatusCodes.ServiceUnavailable, _, _, _) =>
       throw ServiceUnavailable
     case HttpResponse(_, _, _, _) =>
-      throw Exception
+      throw MyException
   }
 }
 
@@ -84,14 +84,14 @@ case object PaymentServer {
 
   case object ExceptionFailed extends Exception
 
-
   case object ImATeapot extends Exception
-
 
   case object InternalServerError extends Exception
 
   case object BadGateway extends Exception
 
   case object ServiceUnavailable extends Exception
+
+  case object MyException extends Exception
 
 }
