@@ -1,26 +1,33 @@
-import actors.CustomerActor
+import actors.PaymentServer.PayPal
+import actors.{Customer, PaymentService}
+import actors.remote.ProductCatalog
 import akka.actor.{ActorSystem, Props}
-import utils.Message._
+import com.typesafe.config.ConfigFactory
+import database.ProductDatabase
+import messages.PaymentServiceMessages.DoPayment
+import messages.ProductCatalogMessages.SearchQuery
 
-import scala.io.StdIn
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 
-object Main extends App {
-  println("This is App created for testing Cart and Checkout actors:")
+object Main {
 
-  val actorSystem = ActorSystem("e-Sklep")
+  def main(args: Array[String]): Unit = {
+    // test function
+    val config = ConfigFactory.load()
+    val clientSystem = ActorSystem("SSystem", config.getConfig("clientapp").withFallback(config))
+    val remoteSystem = ActorSystem("SSystem", config.getConfig("serverapp").withFallback(config))
 
-  try {
-    val customerActor = actorSystem.actorOf(Props[CustomerActor], "customerActor")
+    val catalog = remoteSystem.actorOf(Props(new ProductCatalog(new ProductDatabase)), "catalog")
 
-    var line = StdIn.readLine()
-    while (line != "exit") {
-      if (line != "") {
-        customerActor ! getObjectMessage(line)
-      }
-      line = StdIn.readLine()
-    }
-  }
-  finally {
-    actorSystem.terminate()
+    val customer = clientSystem.actorOf(Props[Customer])
+
+    val paymentService = clientSystem.actorOf(Props[PaymentService])
+    paymentService ! DoPayment(PayPal)
+
+//    customer ! SearchQuery(List("Bigfoot", "Ale"))
+    //    customer ! Start
+    //    customer ! Continue
+    Await.result(clientSystem.whenTerminated, Duration.Inf)
   }
 }
