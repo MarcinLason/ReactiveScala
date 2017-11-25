@@ -55,7 +55,6 @@ class PaymentServer extends Actor {
 case object PaymentServer {
   def apply: PaymentServer = new PaymentServer()
 
-
   sealed trait PaymentSystem {
     def address: String
   }
@@ -69,29 +68,16 @@ case object PaymentServer {
   }
 
   case object BadRequest extends Exception
-
   case object Unauthorized extends Exception
-
   case object Forbidden extends Exception
-
   case object NotFound extends Exception
-
   case object MethodNotAllowed extends Exception
-
   case object NotAcceptable extends Exception
-
   case object RequestTimeout extends Exception
-
   case object ExceptionFailed extends Exception
-
   case object ImATeapot extends Exception
-
   case object InternalServerError extends Exception
-
   case object BadGateway extends Exception
-
   case object ServiceUnavailable extends Exception
-
   case object MyException extends Exception
-
 }

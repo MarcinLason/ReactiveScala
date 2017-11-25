@@ -101,9 +101,10 @@ class CartManager(var shoppingCart: Cart, id: String = "007") extends Persistent
   def setState(state: State): Unit = state match {
     case Empty => context become empty()
     case NonEmpty => context become nonEmpty()
-    case InCheckout =>
+    case InCheckout => {
       context.actorOf(Props[Checkout])
       context become inCheckout()
+    }
   }
 }
 
@@ -114,6 +115,7 @@ object CartManager {
   case object Empty extends State
   case object NonEmpty extends State
   case object InCheckout extends State
+
   sealed trait Action
   case class AddItemAction(item: Item) extends Action
   case class RemoveSingleItemAction(item: Item) extends Action
@@ -134,7 +136,6 @@ object CartManager {
     }
 
     def removeAllItems(): Cart = copy(items = HashMap())
-
     def getItems: List[Item] = items.values.filter(it => it.count > 0).toList
   }
 
