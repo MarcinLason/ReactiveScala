@@ -30,6 +30,7 @@ class Customer extends Actor with Timers {
     case CheckOutStarted(checkoutActor) =>{
       log.info("Customer: checkout confirmed. Got checkout actor.")
       checkoutActor ! DeliveryMethodSelected
+      System.exit(0)
       checkoutActor ! PaymentSelected
     }
 

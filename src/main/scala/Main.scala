@@ -1,12 +1,9 @@
-import actors.PaymentServer.PayPal
 import actors.remote.ProductCatalog
 import actors.{Customer, PaymentService}
 import akka.actor.{ActorSystem, Props}
 import com.typesafe.config.ConfigFactory
 import database.ProductDatabase
 import messages.CustomerMessages.{Continue, Start}
-import messages.PaymentServiceMessages.DoPayment
-import messages.ProductCatalogMessages.SearchQuery
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -24,10 +21,10 @@ object Main {
 
 
     customer ! Start
-//    paymentService ! DoPayment(PayPal)
-//    customer ! SearchQuery(List("Bigfoot", "Ale"))
-//    customer ! Start
 //    customer ! Continue
+    //    paymentService ! DoPayment(PayPal)
+    //    customer ! SearchQuery(List("Bigfoot", "Ale"))
+
 
     Await.result(clientSystem.whenTerminated, Duration.Inf)
   }

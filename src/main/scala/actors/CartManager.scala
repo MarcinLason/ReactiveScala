@@ -4,7 +4,7 @@ import java.net.URI
 
 import actors.CartManager._
 import akka.actor.{Props, Timers}
-import akka.event.LoggingReceive
+import akka.event.{Logging, LoggingReceive}
 import akka.persistence.{PersistentActor, SnapshotOffer}
 import messages.CartManagerMessages._
 import messages.CustomerMessages.{CartEmpty, CheckOutStarted}
@@ -13,6 +13,7 @@ import scala.collection.immutable.HashMap
 import scala.concurrent.duration._
 
 class CartManager(var shoppingCart: Cart, id: String = "007") extends PersistentActor with Timers {
+  private val log = Logging(context.system, this)
   def this() = this(Cart.empty)
 
   def this(id: String) = this(Cart.empty, id)
@@ -23,6 +24,7 @@ class CartManager(var shoppingCart: Cart, id: String = "007") extends Persistent
 
   def empty(): Receive = LoggingReceive {
     case AddItem(item: Item) =>
+      log.info("CartManager: adding item to empty cart.")
       restartTimer()
       this.shoppingCart = shoppingCart.addItem(item)
 
@@ -32,27 +34,37 @@ class CartManager(var shoppingCart: Cart, id: String = "007") extends Persistent
   }
 
   def nonEmpty(): Receive = LoggingReceive {
+
     case AddItem(item: Item) =>
+      log.info("CartManager: adding item to nonEmpty cart.")
       restartTimer()
       this.shoppingCart = shoppingCart.addItem(item)
       persist(CartChangeEvent(AddItemAction(item), NonEmpty)) { _ =>
       }
+
     case RemoveItem(item: Item) if shoppingCart.getItems.size > 1 =>
+      log.info("CartManager: removing item from cart.")
       restartTimer()
       persist(CartChangeEvent(RemoveSingleItemAction(item), NonEmpty)) { _ =>
         this.shoppingCart = shoppingCart.removeItem(item, 1)
       }
+
     case RemoveItem(item: Item) =>
+      log.info("CartManager: removing last item from cart.")
       this.shoppingCart = shoppingCart.removeItem(item, 1)
       context.parent ! CartEmpty()
       context become empty()
       saveSnapshot(shoppingCart)
+
     case CartTimeExpired() =>
+      log.info("CartManager: time expired, removing all items from cart.")
       this.shoppingCart = shoppingCart.removeAllItems()
       context.parent ! CartEmpty()
       context become empty()
       saveSnapshot(shoppingCart)
+
     case StartCheckout =>
+      log.info("CartManager: starting checkout")
       persist(CartChangeEvent(NewState(), InCheckout)) { _ =>
         val checkoutActor = context.actorOf(Props[Checkout])
         sender ! CheckOutStarted(checkoutActor)
@@ -62,6 +74,7 @@ class CartManager(var shoppingCart: Cart, id: String = "007") extends Persistent
 
   def inCheckout(): Receive = LoggingReceive {
     case CheckoutClosed() =>
+      log.info("CartManager: checkout closed.")
       this.shoppingCart = shoppingCart.removeAllItems()
       context.parent ! CartEmpty()
       context become empty()
@@ -81,17 +94,20 @@ class CartManager(var shoppingCart: Cart, id: String = "007") extends Persistent
   }
 
   override def receiveRecover: Receive = {
+
     case CartChangeEvent(action, state) =>
       action match {
         case AddItemAction(item) => shoppingCart = shoppingCart.addItem(item)
         case RemoveSingleItemAction(item) => shoppingCart = shoppingCart.removeItem(item, 1)
         case _ =>
       }
-      println(state)
+      log.info("CartManagerRECOVER: " + state)
       setState(state)
+
     case SnapshotOffer(_, snapshot: Cart) =>
       shoppingCart = snapshot
       setState(Empty)
+
     case SetTimerEvent(time, message) =>
       val currentTime = System.currentTimeMillis()
       val delay = Math.max(1000, time + 10000 - currentTime)

@@ -2,7 +2,7 @@ package actors
 
 import actors.PaymentServer._
 import akka.actor.{Actor, PoisonPill}
-import akka.event.LoggingReceive
+import akka.event.{Logging, LoggingReceive}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse, StatusCodes}
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
@@ -14,11 +14,12 @@ class PaymentServer extends Actor {
 
   import akka.pattern.pipe
   import context.dispatcher
-
+  private val log = Logging(context.system, this)
   val http = Http(context.system)
 
   override def receive: Receive = LoggingReceive {
     case DoPayment(paymentSystem) =>
+      log.info("PaymentServer: got payment to process.")
       http.singleRequest(HttpRequest(uri = paymentSystem.address)).pipeTo(self)
     case HttpResponse(StatusCodes.OK, _, _, _) =>
       context.parent ! PaymentReceived
