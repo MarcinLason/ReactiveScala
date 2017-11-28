@@ -3,13 +3,16 @@ package actors.remote
 import java.util.stream.IntStream
 
 import akka.actor.{Actor, ActorSystem, Props}
-import akka.event.LoggingReceive
+import akka.event.Logging
 import database.ProductDatabase
 import messages.ProductCatalogMessages.{SearchQuery, SearchQueryResponse}
 
 class ProductCatalog(productDatabase: ProductDatabase) extends Actor {
-  override def receive: Receive = LoggingReceive {
+  private val log = Logging(context.system, this)
+
+  override def receive: Receive = {
     case SearchQuery(parameters) =>
+      log.info("ProductCatalog: got SearchQuery to process.")
       context.actorOf(Props(Worker(productDatabase))).forward(SearchQuery(parameters))
   }
 }

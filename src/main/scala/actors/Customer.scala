@@ -30,7 +30,7 @@ class Customer extends Actor with Timers {
     case CheckOutStarted(checkoutActor) =>{
       log.info("Customer: checkout confirmed. Got checkout actor.")
       checkoutActor ! DeliveryMethodSelected
-      System.exit(0)
+//      System.exit(0)
       checkoutActor ! PaymentSelected
     }
 
@@ -45,10 +45,12 @@ class Customer extends Actor with Timers {
       checkoutActor ! PaymentSelected
 
     case SearchQuery(parameters) =>
-      val productCatalog = context.actorSelection("akka.tcp://SSystem@127.0.0.1:2552/user/catalog")
+      log.info("Customer: searching for product in ProductCatalog.")
+      val productCatalog = context.actorSelection("akka.tcp://RemoteSystem@127.0.0.1:2552/user/catalog")
       productCatalog ! SearchQuery(parameters)
 
     case SearchQueryResponse(response) =>
+      log.info("Customer: got response from ProductCatalog. Add " + response.head + " to the cart.")
       val cartManager = context.actorOf(Props[CartManager])
       cartManager ! AddItem(response.head)
 

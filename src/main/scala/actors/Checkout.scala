@@ -18,7 +18,7 @@ class Checkout(id: String = "007") extends PersistentActor with Timers {
   override def persistenceId: String = "checkout-" + id
   override def receiveCommand: Receive = {
     timers.startSingleTimer(CheckoutTimerExpirationKey, CheckoutTimeExpired, 10.seconds)
-    log.info("Checkout: jestem w jakimś RECEIVECOMMAND")
+    log.info("Checkout: got receive command.")
     selectingDelivery()
   }
 

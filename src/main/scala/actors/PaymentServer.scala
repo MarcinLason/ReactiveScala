@@ -22,6 +22,7 @@ class PaymentServer extends Actor {
       log.info("PaymentServer: got payment to process.")
       http.singleRequest(HttpRequest(uri = paymentSystem.address)).pipeTo(self)
     case HttpResponse(StatusCodes.OK, _, _, _) =>
+      log.info("PaymentServer: payment received.")
       context.parent ! PaymentReceived
       self ! PoisonPill
     case HttpResponse(StatusCodes.BadRequest, _, _, _) =>
