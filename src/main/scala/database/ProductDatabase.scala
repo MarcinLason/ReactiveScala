@@ -32,15 +32,10 @@ class ProductDatabase {
 
   def findProduct(parameters: List[String]): List[Item] = {
     parameters.toStream
-      .map(p => p.toLowerCase)
-      .flatMap(p => cache.get(p).asScala)
-      .groupBy(identity)
-      .mapValues(_.size)
-      .toStream
-      .sortWith(_._2 > _._2)
-      .slice(0, 10)
-      .map(_._1)
-      .toList
+      .map(p => p.toLowerCase).flatMap(p => cache.get(p).asScala).groupBy(identity)
+      .mapValues(_.size).toStream
+      .sortWith(_._2 > _._2).slice(0, 10)
+      .map(_._1).toList
   }
 }
 

@@ -30,7 +30,7 @@ object ProductCatalog {
       }
     }))
     IntStream.range(0, 10000).forEach(_ =>
-      client ! SearchQuery(List("Ale", "Bigfoot"))
+      client ! SearchQuery(List("Nike", "Roshe"))
     )
   }
 }
