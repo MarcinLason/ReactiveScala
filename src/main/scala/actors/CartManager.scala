@@ -12,7 +12,7 @@ import messages.CustomerMessages.{CartEmpty, CheckOutStarted}
 import scala.collection.immutable.HashMap
 import scala.concurrent.duration._
 
-class CartManager(var shoppingCart: Cart, id: String = "007") extends PersistentActor with Timers {
+class CartManager(var shoppingCart: Cart, id: String = "01") extends PersistentActor with Timers {
   private val log = Logging(context.system, this)
   def this() = this(Cart.empty)
 
@@ -89,7 +89,7 @@ class CartManager(var shoppingCart: Cart, id: String = "007") extends Persistent
 
   def restartTimer() {
     persist(SetTimerEvent(System.currentTimeMillis(), CartTimeExpired())) { _ =>
-      timers.startSingleTimer(CartExpirationKey, CartTimeExpired(), 10.seconds)
+      timers.startSingleTimer(CartExpirationKey, CartTimeExpired(), 10.minutes)
     }
   }
 
@@ -101,7 +101,7 @@ class CartManager(var shoppingCart: Cart, id: String = "007") extends Persistent
         case RemoveSingleItemAction(item) => shoppingCart = shoppingCart.removeItem(item, 1)
         case _ =>
       }
-      log.info("CartManagerRECOVER: " + state)
+      log.info("CartManager: recover: " + state)
       setState(state)
 
     case SnapshotOffer(_, snapshot: Cart) =>
@@ -141,17 +141,18 @@ object CartManager {
   case class Item(id: URI, name: String, brand: String, count: Int, price: BigDecimal)
 
   case class Cart(items: Map[URI, Item]) {
-    def addItem(it: Item): Cart = {
-      val currentCount = if (items contains it.id) items(it.id).count else 0
-      copy(items = items.updated(it.id, it.copy(count = currentCount + it.count)))
+    def addItem(item: Item): Cart = {
+      val currentCount = if (items contains item.id) items(item.id).count else 0
+      copy(items = items.updated(item.id, item.copy(count = currentCount + item.count)))
     }
 
-    def removeItem(it: Item, cnt: Int): Cart = {
-      val currentCount = if (items contains it.id) items(it.id).count else 0
-      copy(items = items.updated(it.id, it.copy(count = currentCount - cnt)))
+    def removeItem(item: Item, amountToRemove: Int): Cart = {
+      val currentCount = if (items contains item.id) items(item.id).count else 0
+      copy(items = items.updated(item.id, item.copy(count = currentCount - amountToRemove)))
     }
 
     def removeAllItems(): Cart = copy(items = HashMap())
+
     def getItems: List[Item] = items.values.filter(it => it.count > 0).toList
   }
 

@@ -3,7 +3,7 @@ import actors.{Customer, PaymentService}
 import akka.actor.{ActorSystem, Props}
 import com.typesafe.config.ConfigFactory
 import database.ProductDatabase
-import messages.CustomerMessages.{Continue, Start}
+import messages.CustomerMessages.{Restore, Start}
 import messages.ProductCatalogMessages.SearchQuery
 
 import scala.concurrent.Await
@@ -21,7 +21,7 @@ object Main {
     val paymentService = clientSystem.actorOf(Props[PaymentService])
 
     customer ! Start
-//    customer ! Continue
+//    customer ! Restore
 //    customer ! SearchQuery(List("Nike", "Roshe"))
 
     Await.result(clientSystem.whenTerminated, Duration.Inf)

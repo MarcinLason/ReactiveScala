@@ -19,10 +19,9 @@ class Customer extends Actor with Timers {
     case Start => {
       log.info("Customer: creating CartManager")
       val cartManager = context.actorOf(Props[CartManager])
-      cartManager ! AddItem(Item(new URI("7"), "7", "", 1, BigDecimal(1.0)))
-      cartManager ! AddItem(Item(new URI("11"), "11", "", 1, BigDecimal(1.0)))
-      cartManager ! AddItem(Item(new URI("13"), "13", "", 1, BigDecimal(1.0)))
-      cartManager ! RemoveItem(Item(new URI("11"), "11", "", 1, BigDecimal(1.0)))
+      cartManager ! AddItem(Item(new URI("www.opel-cars.com"), "opel", "cars", 1, BigDecimal(30000)))
+      cartManager ! AddItem(Item(new URI("www.bmw-cars.com"), "bmw", "cars", 1, BigDecimal(80000)))
+      cartManager ! RemoveItem(Item(new URI("www.opel-cars.com"), "opel", "cars", 1, BigDecimal(30000)))
       cartManager ! StartCheckout
       log.info("Customer: checkout started.")
     }
@@ -39,7 +38,7 @@ class Customer extends Actor with Timers {
       paymentService ! DoPayment(PayPal)
     }
 
-    case Continue =>
+    case Restore =>
       val cartManager = context.actorOf(Props[CartManager])
       val checkoutActor = context.actorOf(Props[Checkout])
       checkoutActor ! PaymentSelected

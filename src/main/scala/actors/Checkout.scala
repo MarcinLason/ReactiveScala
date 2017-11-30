@@ -11,13 +11,13 @@ import messages.PaymentServiceMessages.InvalidPayment
 
 import scala.concurrent.duration._
 
-class Checkout(id: String = "007") extends PersistentActor with Timers {
+class Checkout(id: String = "01") extends PersistentActor with Timers {
   private val log = Logging(context.system, this)
-  def this() = this("007")
+  def this() = this("01")
 
   override def persistenceId: String = "checkout-" + id
   override def receiveCommand: Receive = {
-    timers.startSingleTimer(CheckoutTimerExpirationKey, CheckoutTimeExpired, 10.seconds)
+    timers.startSingleTimer(CheckoutTimerExpirationKey, CheckoutTimeExpired, 10.minutes)
     log.info("Checkout: got receive command.")
     selectingDelivery()
   }
@@ -67,13 +67,13 @@ class Checkout(id: String = "007") extends PersistentActor with Timers {
 
   def restartCheckoutTimer() {
     persist(SetTimerEvent(System.currentTimeMillis(), CheckoutTimerExpirationKey(), CheckoutTimeExpired())) { _ =>
-      timers.startSingleTimer(CheckoutTimerExpirationKey(), CheckoutTimeExpired(), 10.seconds)
+      timers.startSingleTimer(CheckoutTimerExpirationKey(), CheckoutTimeExpired(), 10.minutes)
     }
   }
 
   def restartPaymentTimer() {
     persist(SetTimerEvent(System.currentTimeMillis(), PaymentTimerExpirationKey(), PaymentTimeExpired())) { _ =>
-      timers.startSingleTimer(PaymentTimerExpirationKey(), PaymentTimeExpired(), 10.seconds)
+      timers.startSingleTimer(PaymentTimerExpirationKey(), PaymentTimeExpired(), 10.minutes)
     }
   }
 

@@ -29,19 +29,43 @@ class PaymentService extends Actor with Timers {
 
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1.minute) {
-      case BadRequest => context.parent ! InvalidPayment; Stop
-      case Unauthorized => context.parent ! InvalidPayment; Stop
-      case Forbidden => context.parent ! InvalidPayment; Restart
-      case NotFound => context.parent ! InvalidPayment; Stop
-      case MethodNotAllowed => Restart
-      case NotAcceptable => Restart
-      case RequestTimeout => Restart
-      case ExceptionFailed => Restart
-      case ImATeapot => Escalate
-      case InternalServerError => Restart
-      case BadGateway => Restart
-      case ServiceUnavailable => Restart
-      case MyException => Escalate
+      case BadRequest => {
+        log.info("PaymentService: BadRequest - stop.")
+        context.parent ! InvalidPayment
+      }; Stop
+      case Unauthorized => {
+        log.info("PaymentService: Unauthorized - stop.")
+        context.parent ! InvalidPayment
+      }; Stop
+      case Forbidden => {
+        log.info("PaymentService: Forbidden - restart.")
+        context.parent ! InvalidPayment
+      }; Restart
+      case NotFound => {
+        log.info("PaymentService: NotFound - stop.")
+        context.parent ! InvalidPayment
+      }; Stop
+      case MethodNotAllowed =>{
+        log.info("PaymentService: MethodNotAllowed - restart.")
+      }; Restart
+      case NotAcceptable => {
+        log.info("PaymentService: NotAcceptable - restart.")
+      }; Restart
+      case RequestTimeout => {
+        log.info("PaymentService: RequestTimeout - restart.")
+      }; Restart
+      case ExceptionFailed => {
+        log.info("PaymentService: ExceptionFailed - restart.")
+      }; Restart
+      case InternalServerError => {
+        log.info("PaymentService: InternalServerError - restart.")
+      }; Restart
+      case ServiceUnavailable => {
+        log.info("PaymentService: ServiceUnavailable - restart.")
+      }; Restart
+      case MyException => {
+        log.info("PaymentService: MyException - escalate.")
+      };  Escalate
     }
 }
 

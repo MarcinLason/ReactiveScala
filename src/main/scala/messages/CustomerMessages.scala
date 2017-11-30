@@ -9,5 +9,5 @@ object CustomerMessages {
   case class CheckOutStarted(checkoutActor: ActorRef) extends Message
   case class CartEmpty() extends Message
   case object Start extends Message
-  case object Continue extends Message
+  case object Restore extends Message
 }

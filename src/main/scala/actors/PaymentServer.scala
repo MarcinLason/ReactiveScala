@@ -41,12 +41,8 @@ class PaymentServer extends Actor {
       throw RequestTimeout
     case HttpResponse(StatusCodes.ExpectationFailed, _, _, _) =>
       throw ExceptionFailed
-    case HttpResponse(StatusCodes.ImATeapot, _, _, _) =>
-      throw ImATeapot
     case HttpResponse(StatusCodes.InternalServerError, _, _, _) =>
       throw InternalServerError
-    case HttpResponse(StatusCodes.BadRequest, _, _, _) =>
-      throw BadGateway
     case HttpResponse(StatusCodes.ServiceUnavailable, _, _, _) =>
       throw ServiceUnavailable
     case HttpResponse(_, _, _, _) =>
@@ -77,9 +73,7 @@ case object PaymentServer {
   case object NotAcceptable extends Exception
   case object RequestTimeout extends Exception
   case object ExceptionFailed extends Exception
-  case object ImATeapot extends Exception
   case object InternalServerError extends Exception
-  case object BadGateway extends Exception
   case object ServiceUnavailable extends Exception
   case object MyException extends Exception
 }
