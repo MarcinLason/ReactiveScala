@@ -1,26 +1,29 @@
-import actors.CustomerActor
+import actors.remote.ProductCatalog
+import actors.{Customer, PaymentService}
 import akka.actor.{ActorSystem, Props}
-import utils.Message._
+import com.typesafe.config.ConfigFactory
+import database.ProductDatabase
+import messages.CustomerMessages.{Restore, Start}
+import messages.ProductCatalogMessages.SearchQuery
 
-import scala.io.StdIn
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 
-object Main extends App {
-  println("This is App created for testing Cart and Checkout actors:")
+object Main {
 
-  val actorSystem = ActorSystem("e-Sklep")
+  def main(args: Array[String]): Unit = {
+    val config = ConfigFactory.load()
+    val clientSystem = ActorSystem("LocalSystem", config.getConfig("clientapp").withFallback(config))
+    val remoteSystem = ActorSystem("RemoteSystem", config.getConfig("serverapp").withFallback(config))
 
-  try {
-    val customerActor = actorSystem.actorOf(Props[CustomerActor], "customerActor")
+    val catalog = remoteSystem.actorOf(Props(new ProductCatalog(new ProductDatabase)), "catalog")
+    val customer = clientSystem.actorOf(Props[Customer])
+    val paymentService = clientSystem.actorOf(Props[PaymentService])
 
-    var line = StdIn.readLine()
-    while (line != "exit") {
-      if (line != "") {
-        customerActor ! getObjectMessage(line)
-      }
-      line = StdIn.readLine()
-    }
-  }
-  finally {
-    actorSystem.terminate()
+    customer ! Start
+//    customer ! Restore
+//    customer ! SearchQuery(List("Nike", "Roshe"))
+
+    Await.result(clientSystem.whenTerminated, Duration.Inf)
   }
 }
