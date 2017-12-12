@@ -1,9 +1,9 @@
-package product_catalog_server.simulations
+package catalog.simulations
 
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
 import net.liftweb.json.Serialization
-import product_catalog_server.simulations.RequestCreator._
+import catalog.simulations.RequestCreator._
 
 import scala.util.Random
 

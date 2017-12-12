@@ -1,8 +1,8 @@
-package product_catalog_server.actors
+package catalog.actors
 
 import akka.actor.{Actor, ActorLogging, ActorRef}
 import akka.event.LoggingReceive
-import product_catalog_server.{ProductCatalog, SearchResults}
+import catalog.{ProductCatalog, SearchResults}
 
 class ProductCatalogWorkerActor(val id: Int, val creator: ActorRef, var productCatalog: ProductCatalog) extends Actor with ActorLogging {
 

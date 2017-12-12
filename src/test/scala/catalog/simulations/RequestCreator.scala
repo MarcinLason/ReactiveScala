@@ -1,6 +1,6 @@
-package product_catalog_server.simulations
+package catalog.simulations
 
-import product_catalog_server.utils.Words
+import catalog.utils.Words
 
 import scala.util.Random
 

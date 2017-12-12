@@ -1,4 +1,4 @@
-package product_catalog_server.actors
+package catalog.actors
 
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props, RootActorPath, Terminated}
 import akka.cluster.ClusterEvent.{CurrentClusterState, MemberUp}
@@ -7,7 +7,7 @@ import akka.cluster.pubsub.DistributedPubSubMediator.Publish
 import akka.cluster.{Cluster, Member, MemberStatus}
 import akka.routing._
 import com.typesafe.config.ConfigFactory
-import product_catalog_server._
+import catalog._
 import shop.actors._
 
 import scala.collection.mutable.ListBuffer

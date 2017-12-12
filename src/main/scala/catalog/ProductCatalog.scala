@@ -1,4 +1,4 @@
-package product_catalog_server
+package catalog
 
 import java.net.URI
 

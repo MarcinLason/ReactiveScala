@@ -1,4 +1,4 @@
-package product_catalog_server.simulations
+package catalog.simulations
 
 import akka.event.slf4j.SLF4JLogging
 import com.typesafe.config.{ConfigException, ConfigFactory}

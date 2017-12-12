@@ -1,4 +1,4 @@
-package product_catalog_server
+package catalog
 
 //#messages
 final case class SearchForItems(words: List[String])

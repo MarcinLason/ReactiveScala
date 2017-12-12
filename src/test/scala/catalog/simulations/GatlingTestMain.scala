@@ -1,4 +1,4 @@
-package product_catalog_server.simulations
+package catalog.simulations
 
 import io.gatling.app.Gatling
 import io.gatling.core.config.GatlingPropertiesBuilder

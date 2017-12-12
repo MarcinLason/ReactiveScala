@@ -1,10 +1,10 @@
-package product_catalog_server.actors
+package catalog.actors
 
 import java.util.concurrent.atomic.AtomicInteger
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Props, Terminated}
 import com.typesafe.config.ConfigFactory
-import product_catalog_server._
+import catalog._
 
 import scala.language.postfixOps
 
