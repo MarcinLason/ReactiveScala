@@ -4,9 +4,10 @@ import akka.actor.{Actor, ActorLogging, ActorRef}
 import akka.event.LoggingReceive
 import catalog.{ProductCatalog, SearchResults}
 
-class ProductCatalogWorkerActor(val id: Int, val creator: ActorRef, var productCatalog: ProductCatalog) extends Actor with ActorLogging {
+class CatalogWorker(val id: Int, val creator: ActorRef, var productCatalog: ProductCatalog) extends Actor
+  with ActorLogging {
 
-  import ProductCatalogWorkerActor._
+  import CatalogWorker._
 
   def receive: Receive = LoggingReceive {
     case SearchForItems(words) =>
@@ -14,8 +15,6 @@ class ProductCatalogWorkerActor(val id: Int, val creator: ActorRef, var productC
   }
 }
 
-object ProductCatalogWorkerActor {
-
+object CatalogWorker {
   case class SearchForItems(words: List[String])
-
 }

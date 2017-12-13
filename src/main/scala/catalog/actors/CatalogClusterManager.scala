@@ -3,29 +3,30 @@ package catalog.actors
 import java.util.concurrent.atomic.AtomicInteger
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Props, Terminated}
-import com.typesafe.config.ConfigFactory
 import catalog._
+import com.typesafe.config.ConfigFactory
 
 import scala.language.postfixOps
 
-class ProductCatalogClusterManagerActor extends Actor {
+class CatalogClusterManager extends Actor {
 
+  val SERVICE_UNAVAILABLE = "Service unavailable."
   var clusterNodes = IndexedSeq.empty[ActorRef]
   var idsMap = Map[ActorRef, String]()
-  var statsActorRef: ActorRef = _
-  var loggingActorRef: ActorRef = _
+  var statisticsActor: ActorRef = _
+  var loggingActor: ActorRef = _
   var jobCounter = 0
 
   def receive = {
     case job: SearchForItems if clusterNodes.isEmpty =>
-      sender() ! ProductCatalogJobFailed("Service unavailable, try again later", job)
+      sender() ! ProductCatalogJobFailed(SERVICE_UNAVAILABLE, job)
 
     case job: SearchForItems =>
       jobCounter += 1
       clusterNodes(jobCounter % clusterNodes.size) forward job
 
     case job: GetStats =>
-      statsActorRef forward job
+      statisticsActor forward job
 
     case ClusterNodeRegistration(id: String) if !clusterNodes.contains(sender()) =>
       context watch sender()
@@ -35,26 +36,26 @@ class ProductCatalogClusterManagerActor extends Actor {
     case StatsActorRegistration(id: String) =>
       context watch sender()
       idsMap += (sender() -> id)
-      statsActorRef = sender()
+      statisticsActor = sender()
 
     case LoggingActorRegistration(id: String) =>
       context watch sender()
       idsMap += (sender() -> id)
-      loggingActorRef = sender()
+      loggingActor = sender()
 
-    case Terminated(a) if clusterNodes.contains(a) =>
-      clusterNodes = clusterNodes.filterNot(_ == a)
-      ProductCatalogManagerActor.main(Seq("0", idsMap.getOrElse(a, default = "0")).toArray)
+    case Terminated(actor) if clusterNodes.contains(actor) =>
+      clusterNodes = clusterNodes.filterNot(_ == actor)
+      CatalogManager.main(Seq("0", idsMap.getOrElse(actor, default = "0")).toArray)
 
-    case Terminated(a) if statsActorRef == a =>
-      ProductCatalogStatsActor.main(Seq("0", idsMap.getOrElse(a, default = "stats")).toArray)
+    case Terminated(actor) if statisticsActor == actor =>
+      CatalogStatistics.main(Seq("0", idsMap.getOrElse(actor, default = "stats")).toArray)
 
-    case Terminated(a) if loggingActorRef == a =>
-      ProductCatalogLoggingActor.main(Seq("0", idsMap.getOrElse(a, default = "logs")).toArray)
+    case Terminated(actor) if loggingActor == actor =>
+      CatalogLogger.main(Seq("0", idsMap.getOrElse(actor, default = "logs")).toArray)
   }
 }
 
-object ProductCatalogClusterManagerActor {
+object CatalogClusterManager {
   def run(args: Array[String]): ActorRef = {
     // Override the configuration of the port when specified as program argument
     val port = if (args.isEmpty) "0" else args(0)
@@ -63,10 +64,9 @@ object ProductCatalogClusterManagerActor {
       withFallback(ConfigFactory.load("cluster"))
 
     val system = ActorSystem("ClusterSystem", config)
-    val clusterManager = system.actorOf(Props[ProductCatalogClusterManagerActor], name = "clusterManager")
+    val clusterManager = system.actorOf(Props[CatalogClusterManager], name = "clusterManager")
 
     val counter = new AtomicInteger
-    import system.dispatcher
     clusterManager
   }
 }

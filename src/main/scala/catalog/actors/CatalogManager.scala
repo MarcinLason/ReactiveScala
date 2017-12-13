@@ -12,18 +12,19 @@ import shop.actors._
 
 import scala.collection.mutable.ListBuffer
 
-class ProductCatalogManagerActor(val id: String, val system: ActorSystem, var productCatalog: ProductCatalog) extends Actor with ActorLogging {
+class CatalogManager(val id: String, val system: ActorSystem, var productCatalog: ProductCatalog) extends Actor
+  with ActorLogging {
 
-  import ProductCatalogManagerActor._
+  import CatalogManager._
 
   val mediator = DistributedPubSub(system).mediator
-  val no_routees = 5
-  var details: JobDetails = _ // id, number of of finished workers
+  val numberOfRoutees = 5
+  var jobDetails: JobDetails = _ // id, number of of finished workers
 
   var router: Router = {
     val routees = ListBuffer[ActorRefRoutee]()
-    for (p <- productCatalog.splitCatalog(no_routees); i <- 0 to no_routees) {
-      val worker = system.actorOf(Props(new ProductCatalogWorkerActor(i, self, new ProductCatalog(p))))
+    for (p <- productCatalog.splitCatalog(numberOfRoutees); i <- 0 to numberOfRoutees) {
+      val worker = system.actorOf(Props(new CatalogWorker(i, self, new ProductCatalog(p))))
       context watch worker
       routees += ActorRefRoutee(worker)
     }
@@ -42,22 +43,22 @@ class ProductCatalogManagerActor(val id: String, val system: ActorSystem, var pr
     case SearchForItems(words) =>
       mediator ! Publish("stats", id)
       mediator ! Publish("logs", Log(id, words))
-      details = JobDetails(0, CatalogSearchResults(List()), sender())
-      router.route(ProductCatalogWorkerActor.SearchForItems(words), sender())
+      jobDetails = JobDetails(0, CatalogSearchResults(List()), sender())
+      router.route(CatalogWorker.SearchForItems(words), sender())
 
     case SearchResults(catalogSearchResults) =>
-      val bestResults: CatalogSearchResults = mergeResults(details.bestResults, catalogSearchResults)
-      if (details.workersFinished == no_routees) {
-        details.sender ! bestResults.scoredItems.unzip._1
+      val bestResults: CatalogSearchResults = mergeResults(jobDetails.bestResults, catalogSearchResults)
+      if (jobDetails.workersFinished == numberOfRoutees) {
+        jobDetails.sender ! bestResults.scoredItems.unzip._1
       } else {
-        details = JobDetails(details.workersFinished + 1, bestResults, details.sender)
+        jobDetails = JobDetails(jobDetails.workersFinished + 1, bestResults, jobDetails.sender)
       }
 
     case Get => sender() ! ProductCatalogStatus(productCatalog)
 
     case Terminated(a) ⇒
       router = router.removeRoutee(a)
-      val r = context.actorOf(Props[ProductCatalogWorkerActor])
+      val r = context.actorOf(Props[CatalogWorker])
       context watch r
       router = router.addRoutee(r)
 
@@ -78,11 +79,9 @@ class ProductCatalogManagerActor(val id: String, val system: ActorSystem, var pr
   }
 }
 
-object ProductCatalogManagerActor {
+object CatalogManager {
   case object Get
-
   case class ProductCatalogStatus(productCatalog: ProductCatalog)
-
   case class JobDetails(workersFinished: Int, bestResults: CatalogSearchResults, sender: ActorRef)
 
   def main(args: Array[String]): Unit = {
@@ -94,6 +93,6 @@ object ProductCatalogManagerActor {
       withFallback(ConfigFactory.load("cluster"))
 
     val system: ActorSystem = ActorSystem("ClusterSystem", config)
-    system.actorOf(Props(new ProductCatalogManagerActor(id, system, ProductCatalog.ready)), name = "clusterNode")
+    system.actorOf(Props(new CatalogManager(id, system, ProductCatalog.ready)), name = "clusterNode")
   }
 }

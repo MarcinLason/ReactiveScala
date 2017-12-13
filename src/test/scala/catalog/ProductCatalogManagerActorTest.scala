@@ -6,8 +6,8 @@ import akka.actor.{ActorSelection, ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit}
 import com.typesafe.config.ConfigFactory
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
-import catalog.actors.ProductCatalogManagerActor
-import catalog.actors.ProductCatalogManagerActor.Get
+import catalog.actors.CatalogManager
+import catalog.actors.CatalogManager.Get
 
 class ProductCatalogManagerActorTest extends TestKit(ActorSystem("ClusterSystem", ConfigFactory.load("cluster.conf")))
   with WordSpecLike with Matchers with BeforeAndAfterAll with ImplicitSender {
@@ -15,8 +15,8 @@ class ProductCatalogManagerActorTest extends TestKit(ActorSystem("ClusterSystem"
   "ProductCatalogActor" must {
 
     "be have items from file" in {
-      val actorRef = TestActorRef[ProductCatalogManagerActor]
-      (Props(new ProductCatalogManagerActor("0", system, ProductCatalog.ready)))
+      val actorRef = TestActorRef[CatalogManager]
+      (Props(new CatalogManager("0", system, ProductCatalog.ready)))
       val actor = actorRef.underlyingActor
       actor.productCatalog.items(new URI("0000040822938")).name shouldBe "Fanta orange"
     }
@@ -30,7 +30,7 @@ class ProductCatalogManagerActorTest extends TestKit(ActorSystem("ClusterSystem"
     }
 
     "be the same as the one from remote selection" in {
-      val actorRef = system.actorOf(Props(new ProductCatalogManagerActor("1", system, ProductCatalog.ready)))
+      val actorRef = system.actorOf(Props(new CatalogManager("1", system, ProductCatalog.ready)))
       val actorSelection: ActorSelection = system
         .actorSelection("akka.tcp://actorSystem@127.0.0.1:2553/user/productCatalog")
 

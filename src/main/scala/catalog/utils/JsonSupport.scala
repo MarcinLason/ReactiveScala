@@ -3,7 +3,7 @@ package catalog.utils
 import java.net.URI
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import catalog.actors.ProductCatalogStatsActor.{Stat, Stats}
+import catalog.actors.CatalogStatistics.{Stat, Stats}
 import catalog.{CatalogSearchResults, SearchResults}
 import shop.actors.Item
 import spray.json.{DefaultJsonProtocol, DeserializationException, JsArray, JsNumber, JsString, JsValue, RootJsonFormat}
