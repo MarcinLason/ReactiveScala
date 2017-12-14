@@ -57,7 +57,7 @@ class CatalogClusterManager extends Actor {
 
 object CatalogClusterManager {
   def run(args: Array[String]): ActorRef = {
-    // Override the configuration of the port when specified as program argument
+
     val port = if (args.isEmpty) "0" else args(0)
     val config = ConfigFactory.parseString(s"akka.remote.netty.tcp.port=$port").
       withFallback(ConfigFactory.parseString("akka.cluster.roles = [clusterManager]")).

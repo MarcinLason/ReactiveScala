@@ -18,8 +18,8 @@ class CatalogManager(val id: String, val system: ActorSystem, var productCatalog
   import CatalogManager._
 
   val mediator = DistributedPubSub(system).mediator
-  val numberOfRoutees = 5
-  var jobDetails: JobDetails = _ // id, number of of finished workers
+  val numberOfRoutees = 50
+  var jobDetails: JobDetails = _
 
   var router: Router = {
     val routees = ListBuffer[ActorRefRoutee]()
@@ -28,7 +28,7 @@ class CatalogManager(val id: String, val system: ActorSystem, var productCatalog
       context watch worker
       routees += ActorRefRoutee(worker)
     }
-    Router(BroadcastRoutingLogic(), routees.toIndexedSeq)
+    Router(RoundRobinRoutingLogic(), routees.toIndexedSeq)
   }
 
   val cluster = Cluster(system)
@@ -85,7 +85,7 @@ object CatalogManager {
   case class JobDetails(workersFinished: Int, bestResults: CatalogSearchResults, sender: ActorRef)
 
   def main(args: Array[String]): Unit = {
-    // Override the configuration of the port when specified as program argument
+
     val port = if (args.isEmpty) "0" else args(0)
     val id = if (args.length < 2) "0" else args(1)
     val config = ConfigFactory.parseString(s"akka.remote.netty.tcp.port=$port").

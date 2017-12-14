@@ -22,7 +22,7 @@ object CatalogServer extends App {
   implicit val system = ActorSystem("ClusterSystem", ConfigFactory.load("cluster.conf"))
   implicit val materializer = ActorMaterializer()
   implicit val executionContext = system.dispatcher
-  private implicit val timeout: Timeout = 15 seconds
+  private implicit val timeout: Timeout = 30 seconds
 
   val clusterManagerRef = CatalogClusterManager.run(Seq("2555").toArray)
   var id = 1
@@ -37,11 +37,11 @@ object CatalogServer extends App {
                   .mapTo[SearchResults])
                 complete(result)
               } catch {
-                case ate: AskTimeoutException =>
-                  complete(201 -> ate)
-                case cce: ClassCastException =>
-                  complete(202 -> cce)
-                case e => complete(500 -> e)
+                case askTimeoutException: AskTimeoutException =>
+                  complete(201 -> askTimeoutException)
+                case classCastException: ClassCastException =>
+                  complete(202 -> classCastException)
+                case exception => complete(500 -> exception)
               }
             }
           }
@@ -54,24 +54,18 @@ object CatalogServer extends App {
           }
         }
     }
-  CatalogManager.main(Seq("2556", "0").toArray)
+  CatalogManager.main(Seq("2556", "manager1").toArray)
+  CatalogManager.main(Seq("0", "manager2").toArray)
+  CatalogManager.main(Seq("0", "manager3").toArray)
   CatalogStatistics.main(Seq("0", "stats").toArray)
   CatalogLogger.main(Seq("0", "logs").toArray)
-  startClusterNodes()
   val bindingFuture = Http().bindAndHandle(routes, "localhost", 8081)
-
-  def startClusterNodes(): Unit = {
-    CatalogManager.main(Seq("0", id.toString).toArray)
-    id += 1
-    CatalogManager.main(Seq("0", id.toString).toArray)
-    id += 1
-  }
 
   println(s"Server online at http://localhost:8081/\nPress RETURN to stop...")
   StdIn.readLine()
   bindingFuture
-    .flatMap(_.unbind()) // trigger unbinding from the port
-    .onComplete(_ => system.terminate()) // and shutdown when done
+    .flatMap(_.unbind())
+    .onComplete(_ => system.terminate())
 }
 
 

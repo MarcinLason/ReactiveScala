@@ -3,9 +3,7 @@ package catalog.simulations
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
 import net.liftweb.json.Serialization
-import catalog.simulations.RequestCreator._
-
-import scala.util.Random
+import catalog.utils.Words
 
 class SearchTestCase extends io.gatling.core.scenario.Simulation with TestConfig {
 
@@ -13,7 +11,7 @@ class SearchTestCase extends io.gatling.core.scenario.Simulation with TestConfig
   implicit val formats = net.liftweb.json.DefaultFormats
 
   def randomSerializedRequests = {
-    StringBody(Serialization.write(searchWordsLists(Random.nextInt(searchWordsLists.size))))
+    StringBody(Serialization.write(Words(List("Nike", "Roshe"))))
   }
 
   val testCase = scenario("Simulation for the product catalog").repeat(repeatAmount) {

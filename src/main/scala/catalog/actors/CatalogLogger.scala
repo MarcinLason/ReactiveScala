@@ -23,10 +23,10 @@ class CatalogLogger(val id: String, val system: ActorSystem) extends Actor with 
   override def receive: PartialFunction[Any, Unit] = {
 
     case SubscribeAck(Subscribe("logs", None, `self`)) ⇒
-      log.info("subscribing to logs")
+      log.info("CatalogLogger: subscribing to logs.")
 
-    case l: Log =>
-      log.info("Node " + l.id + " is managing query for " + l.query.toString())
+    case logObject: Log =>
+      log.info("Node " + logObject.id + " is managing query for " + logObject.query.toString())
 
     case state: CurrentClusterState =>
       state
@@ -45,9 +45,9 @@ class CatalogLogger(val id: String, val system: ActorSystem) extends Actor with 
 object CatalogLogger {
 
   def main(args: Array[String]): Unit = {
-    // Override the configuration of the port when specified as program argument
     val port = if (args.isEmpty) "0" else args(0)
     val id = if (args.length < 2) "0" else args(1)
+
     val config = ConfigFactory.parseString(s"akka.remote.netty.tcp.port=$port").
       withFallback(ConfigFactory.parseString("akka.cluster.roles = [log]")).
       withFallback(ConfigFactory.load("cluster"))
